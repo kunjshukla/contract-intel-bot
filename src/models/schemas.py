@@ -42,7 +42,7 @@ class ExtractionFields(BaseModel):
 
 # Document Schemas
 class DocumentIn(BaseModel):
-    """Document upload request."""
+    """Document upload request - not used for multipart/form-data."""
 
     filename: str = Field(..., min_length=1, max_length=255)
 
@@ -58,6 +58,14 @@ class DocumentOut(BaseModel):
     metadata: dict = Field(default_factory=dict)
 
     model_config = ConfigDict(from_attributes=True)
+
+
+class IngestResponse(BaseModel):
+    """Response for bulk document ingestion."""
+
+    document_ids: List[UUID]
+    status: str = "ingested"
+    count: int
 
 
 # Extraction Response
