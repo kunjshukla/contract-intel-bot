@@ -211,6 +211,29 @@ async def ingest_pdf(
         size_kb=file_size // 1024,
     )
     
+    # Chunk and embed document for RAG
+    try:
+        from src.services.chunking import chunk_and_embed
+        
+        chunk_count = await chunk_and_embed(
+            doc_id=document.id,
+            db=db,
+            skip_embedding=False,
+        )
+        
+        logger.info(
+            "Document chunked and embedded",
+            doc_id=str(document.id),
+            chunks=chunk_count,
+        )
+    except Exception as e:
+        logger.error(
+            "Chunking/embedding failed, document saved without vectors",
+            doc_id=str(document.id),
+            error=str(e),
+        )
+        # Don't fail ingestion if chunking fails - document is still saved
+    
     return document.id
 
 

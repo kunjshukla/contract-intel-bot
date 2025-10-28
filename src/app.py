@@ -13,7 +13,7 @@ from fastapi.responses import JSONResponse
 from src.core.config import get_settings
 from src.core.logging import logger
 from src.db.engine import init_db
-from src.routers import health, ingest, extract, ask, audit
+from src.routers import health, ingest, extract, ask, audit, search
 
 
 # Application lifecycle management
@@ -84,6 +84,7 @@ async def global_exception_handler(request: Request, exc: Exception):
 # Include routers
 app.include_router(health.router, tags=["Health"])
 app.include_router(ingest.router, prefix="/api/v1", tags=["Ingestion"])
+app.include_router(search.router, prefix="/api/v1", tags=["Search"])
 app.include_router(extract.router, prefix="/api/v1", tags=["Extraction"])
 app.include_router(ask.router, prefix="/api/v1", tags=["Q&A"])
 app.include_router(audit.router, prefix="/api/v1", tags=["Audit"])
