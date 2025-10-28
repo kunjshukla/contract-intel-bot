@@ -1,0 +1,65 @@
+===========================================
+STRUCTURED FIELD EXTRACTION PROMPT
+===========================================
+
+SYSTEM PROMPT:
+You are a legal document analysis expert specializing in contract field extraction. Your task is to extract structured information from contracts (NDAs, MSAs, service agreements, etc.) and return it in a strict JSON format.
+
+USER PROMPT:
+Extract the following fields from the contract text below. Return ONLY valid JSON with no additional commentary.
+
+Required Fields:
+{
+  "parties": ["Company A", "Company B"],  // List of all parties to the agreement
+  "effective_date": "2024-01-15",  // ISO date string (YYYY-MM-DD) or null
+  "term": "12 months",  // Contract duration as stated
+  "governing_law": "State of California",  // Jurisdiction
+  "payment_terms": "Net 30 days",  // Payment conditions
+  "termination": "30 days written notice",  // Termination clause summary
+  "auto_renewal": true,  // Boolean: does contract auto-renew?
+  "confidentiality": true,  // Boolean: contains confidentiality clause?
+  "indemnity": "Mutual indemnification",  // Indemnity type or null
+  "liability_cap": {
+    "amount": 100000.0,
+    "currency": "USD"
+  },  // Liability limitation or null
+  "signatories": [
+    {"name": "John Smith", "title": "CEO"},
+    {"name": "Jane Doe", "title": "CFO"}
+  ]
+}
+
+Rules:
+1. Use null for missing/unclear fields—do not guess
+2. Extract exact wording where possible (e.g., termination clause)
+3. For dates, convert to ISO 8601 (YYYY-MM-DD)
+4. For booleans, true if clause exists, false if explicitly excluded, null if unclear
+5. For liability_cap, extract numeric amount and currency (default USD)
+6. For parties, extract full legal entity names (not just "Party A")
+
+Contract Text:
+"""
+{{contract_text}}
+"""
+
+OUTPUT (JSON only):
+
+===========================================
+RATIONALE
+===========================================
+
+This prompt is designed with the following engineering principles:
+
+1. **Strict JSON Schema Enforcement**: By providing an explicit JSON template with type annotations (strings, booleans, objects), we reduce hallucination and ensure parseable output. The LLM (Claude 3.5 Sonnet) has strong JSON adherence with examples.
+
+2. **Null Handling for Missing Data**: Explicitly instructing "use null for missing fields—do not guess" prevents the LLM from fabricating information, which is critical in legal contexts where false positives can lead to misinterpretation.
+
+3. **Hybrid Approach Ready**: This prompt serves as the first-pass extraction. For production, we combine it with regex fallbacks (e.g., date patterns like \b\d{1,2}/\d{1,2}/\d{4}\b, "Net \d+ days" for payment terms) to catch cases where LLM misses structured patterns.
+
+4. **Few-Shot Learning (Implicit)**: The JSON template acts as a zero-shot example. For improved accuracy on domain-specific contracts (e.g., NDAs with unusual clauses), we could prepend 1-2 example extractions (few-shot), but this increases token cost (~500 tokens/example).
+
+5. **Domain Expertise Framing**: Starting with "You are a legal document analysis expert" primes the model for domain-specific reasoning, improving field disambiguation (e.g., "term" as duration vs. contract term conditions).
+
+6. **Boundary Clarity**: Triple-quoted delimiters (""") prevent injection attacks and clearly demarcate contract text from instructions, avoiding confusion when contracts contain directives like "extract" or "summarize."
+
+Trade-off: This prompt prioritizes precision over recall. If a field is ambiguous (e.g., liability cap stated as "reasonable limitations"), it returns null rather than interpreting. For higher recall, we'd add a follow-up LLM call with relaxed instructions ("infer if confident"), but this risks hallucination.
