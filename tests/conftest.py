@@ -2,9 +2,14 @@
 Pytest configuration and fixtures.
 """
 
+import os
 import pytest
-from httpx import AsyncClient
+from httpx import AsyncClient, ASGITransport
 from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession, async_sessionmaker
+
+# Set up test environment variables before importing app
+os.environ.setdefault("OPENROUTER_API_KEY", "test-key-for-testing")
+os.environ.setdefault("FAISS_INDEX_PATH", ":memory:")
 
 from src.app import app
 from src.db.engine import Base, get_db
@@ -39,11 +44,23 @@ async def db_session():
 
 
 @pytest.fixture(scope="function")
+async def db(db_session):
+    """Alias for db_session to match test expectations."""
+    return db_session
+
+
+@pytest.fixture(scope="function")
 async def client(db_session):
     """Create test client with database override."""
     app.dependency_overrides[get_db] = override_get_db
     
-    async with AsyncClient(app=app, base_url="http://test") as ac:
+    async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as ac:
         yield ac
     
     app.dependency_overrides.clear()
+
+
+@pytest.fixture(scope="function")
+async def async_client(client):
+    """Alias for client to support both naming conventions."""
+    return client

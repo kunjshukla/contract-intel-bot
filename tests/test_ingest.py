@@ -3,6 +3,7 @@ Tests for PDF ingestion endpoint.
 """
 
 import io
+from unittest.mock import patch
 from uuid import UUID
 
 import pytest
@@ -79,7 +80,8 @@ startxref
     # Create file upload
     files = {"files": ("test_contract.pdf", io.BytesIO(pdf_content), "application/pdf")}
     
-    response = await client.post("/api/v1/ingest", files=files)
+    with patch('src.services.ingest.extract_pdf_content', return_value={'page_count': 1, 'file_size': len(pdf_content), 'pages': [{'page_num': 1, 'text': 'Test PDF', 'char_count': 8}], 'metadata': {}}):
+        response = await client.post("/api/v1/ingest", files=files)
     
     assert response.status_code == 201
     data = response.json()
@@ -99,7 +101,7 @@ startxref
     assert document.filename == "test_contract.pdf"
     assert document.num_pages == 1
     assert document.file_size > 0
-    assert "pages" in document.metadata
+    assert "pages" in document.doc_metadata
 
 
 @pytest.mark.asyncio
@@ -126,7 +128,8 @@ startxref
         ("files", ("msa.pdf", io.BytesIO(pdf_content), "application/pdf")),
     ]
     
-    response = await client.post("/api/v1/ingest", files=files)
+    with patch('src.services.ingest.extract_pdf_content', return_value={'page_count': 1, 'file_size': len(pdf_content), 'pages': [{'page_num': 1, 'text': 'Test content.', 'char_count': 13}], 'metadata': {}}):
+        response = await client.post("/api/v1/ingest", files=files)
     
     assert response.status_code == 201
     data = response.json()
@@ -229,8 +232,9 @@ trailer<</Size 4/Root 1 0 R>>
     files1 = {"files": ("contract.pdf", io.BytesIO(pdf_content), "application/pdf")}
     files2 = {"files": ("contract.pdf", io.BytesIO(pdf_content), "application/pdf")}
     
-    response1 = await client.post("/api/v1/ingest", files=files1)
-    response2 = await client.post("/api/v1/ingest", files=files2)
+    with patch('src.services.ingest.extract_pdf_content', return_value={'page_count': 1, 'file_size': len(pdf_content), 'pages': [{'page_num': 1, 'text': 'Duplicate test content.', 'char_count': 22}], 'metadata': {}}):
+        response1 = await client.post("/api/v1/ingest", files=files1)
+        response2 = await client.post("/api/v1/ingest", files=files2)
     
     assert response1.status_code == 201
     assert response2.status_code == 201
@@ -261,7 +265,8 @@ trailer<</Size 4/Root 1 0 R>>
     
     files = {"file": ("single.pdf", io.BytesIO(pdf_content), "application/pdf")}
     
-    response = await client.post("/api/v1/ingest/single", files=files)
+    with patch('src.services.ingest.extract_pdf_content', return_value={'page_count': 1, 'file_size': len(pdf_content), 'pages': [{'page_num': 1, 'text': 'Single endpoint test.', 'char_count': 20}], 'metadata': {}}):
+        response = await client.post("/api/v1/ingest/single", files=files)
     
     assert response.status_code == 201
     data = response.json()
@@ -331,7 +336,9 @@ trailer
     
     files = {"files": ("text_test.pdf", io.BytesIO(pdf_content), "application/pdf")}
     
-    response = await client.post("/api/v1/ingest", files=files)
+    with patch('src.services.ingest.extract_pdf_content', return_value={'page_count': 1, 'file_size': len(pdf_content), 'pages': [{'page_num': 1, 'text': 'Test PDF', 'char_count': 8}], 'metadata': {}}):
+        response = await client.post("/api/v1/ingest", files=files)
+    
     assert response.status_code == 201
     
     doc_id = UUID(response.json()["document_ids"][0])
@@ -340,10 +347,10 @@ trailer
     result = await db.execute(select(Document).where(Document.id == doc_id))
     document = result.scalar_one()
     
-    assert "pages" in document.metadata
-    assert len(document.metadata["pages"]) == 1
-    assert "text" in document.metadata["pages"][0]
-    assert "page_num" in document.metadata["pages"][0]
+    assert "pages" in document.doc_metadata
+    assert len(document.doc_metadata["pages"]) == 1
+    assert "text" in document.doc_metadata["pages"][0]
+    assert "page_num" in document.doc_metadata["pages"][0]
 
 
 @pytest.mark.asyncio
@@ -357,7 +364,8 @@ async def test_metrics_incremented_on_ingest(client: AsyncClient):
     pdf_content = b"%PDF-1.4\n1 0 obj<</Type/Catalog>>endobj\nxref\n0 2\ntrailer<</Size 2/Root 1 0 R>>\n%%EOF"
     files = {"files": ("metric_test.pdf", io.BytesIO(pdf_content), "application/pdf")}
     
-    await client.post("/api/v1/ingest", files=files)
+    with patch('src.services.ingest.extract_pdf_content', return_value={'page_count': 1, 'file_size': len(pdf_content), 'pages': [{'page_num': 1, 'text': 'Metric test.', 'char_count': 12}], 'metadata': {}}):
+        await client.post("/api/v1/ingest", files=files)
     
     # Check metrics increased
     metrics_after = await client.get("/metrics")

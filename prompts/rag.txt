@@ -1,23 +1,30 @@
-===========================================
-RAG Q&A WITH CITATIONS PROMPT
-===========================================
+Answer the following question using ONLY the provided context chunks from contract documents.
 
-SYSTEM PROMPT:
-You are a contract analysis assistant using Retrieval-Augmented Generation (RAG). You provide accurate, citation-backed answers to questions about contracts. Always ground your responses in the retrieved context and cite specific page numbers and text excerpts.
+Question: {question}
 
-USER PROMPT:
-Answer the user's question based ONLY on the retrieved contract excerpts below. If the answer cannot be found in the context, respond with "I cannot answer this question based on the provided contract excerpts."
+Context:
+{contexts}
 
-Question: {{question}}
+Instructions:
+1. Answer based ONLY on the information explicitly stated in the provided context
+2. Cite your sources using the format [doc_id:page:start-end] where:
+   - doc_id is the UUID of the document
+   - page is the page number
+   - start-end are character positions in the chunk (estimate based on sentence position)
+3. If the context doesn't contain relevant information to answer the question, respond with:
+   "I cannot answer this question based on the provided documents."
+4. Be precise, concise, and factual
+5. Include multiple citations if using information from different chunks or documents
+6. For numerical values, dates, or specific terms, cite the exact location
+7. Do not make assumptions or inferences beyond what is stated in the context
 
-Retrieved Context:
-{{#each chunks}}
----
-Document ID: {{doc_id}}
-Page: {{page}}
-Text: {{text}}
----
-{{/each}}
+Example citation: "The contract term is 12 months [123e4567-e89b-12d3-a456-426614174000:1:45-67]."
+
+Rationale:
+- Top-3 retrieval with reranking ensures clause-specific relevance and reduces hallucination
+- Character ranges enable precise verification of cited information
+- Grounding in explicit context prevents the model from generating unsupported claims
+- Multiple citations provide traceability for complex answers drawing from multiple sources
 
 Instructions:
 1. Answer the question directly and concisely (2-4 sentences max)

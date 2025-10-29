@@ -9,7 +9,7 @@ USER PROMPT:
 Extract the following fields from the contract text below. Return ONLY valid JSON with no additional commentary.
 
 Required Fields:
-{
+{{
   "parties": ["Company A", "Company B"],  // List of all parties to the agreement
   "effective_date": "2024-01-15",  // ISO date string (YYYY-MM-DD) or null
   "term": "12 months",  // Contract duration as stated
@@ -19,15 +19,15 @@ Required Fields:
   "auto_renewal": true,  // Boolean: does contract auto-renew?
   "confidentiality": true,  // Boolean: contains confidentiality clause?
   "indemnity": "Mutual indemnification",  // Indemnity type or null
-  "liability_cap": {
+  "liability_cap": {{
     "amount": 100000.0,
     "currency": "USD"
-  },  // Liability limitation or null
+  }},  // Liability limitation or null
   "signatories": [
-    {"name": "John Smith", "title": "CEO"},
-    {"name": "Jane Doe", "title": "CFO"}
+    {{"name": "John Smith", "title": "CEO"}},
+    {{"name": "Jane Doe", "title": "CFO"}}
   ]
-}
+}}
 
 Rules:
 1. Use null for missing/unclear fields—do not guess
@@ -39,10 +39,10 @@ Rules:
 
 Contract Text:
 """
-{{contract_text}}
+{full_text}
 """
 
-OUTPUT (JSON only):
+OUTPUT (JSON only, no markdown code blocks):
 
 ===========================================
 RATIONALE

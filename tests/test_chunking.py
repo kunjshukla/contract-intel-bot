@@ -53,7 +53,9 @@ trailer<</Size 5/Root 1 0 R>>
 """
     
     # Ingest document with mocked embeddings
-    with patch('src.services.chunking.get_embedding', side_effect=mock_get_embedding):
+    text = "MUTUAL NON-DISCLOSURE AGREEMENT\n\nThis Agreement is entered into as of January 1, 2024.\n\nThe parties agree to maintain confidentiality for 2 years.\n\nPayment terms: Net 30 days from invoice date."
+    with patch('src.services.chunking.get_embedding', side_effect=mock_get_embedding), \
+         patch('src.services.ingest.extract_pdf_content', return_value={'page_count': 1, 'file_size': len(pdf_content), 'pages': [{'page_num': 1, 'text': text, 'char_count': len(text)}], 'metadata': {}}):
         files = {"files": ("test_nda.pdf", io.BytesIO(pdf_content), "application/pdf")}
         response = await client.post("/api/v1/ingest", files=files)
     
@@ -113,7 +115,9 @@ trailer<</Size 5/Root 1 0 R>>
 %%EOF
 """
     
-    with patch('src.services.chunking.get_embedding', side_effect=mock_get_embedding):
+    text = "SECTION 1: DEFINITIONS\n\nConfidential Information means any information disclosed by one party to the other.\n\nSECTION 2: OBLIGATIONS\n\nThe Receiving Party shall maintain confidentiality and not disclose to third parties.\n\nSECTION 3: TERM\n\nThis Agreement shall remain in effect for a period of two years from the Effective Date.\n\nSECTION 4: TERMINATION\n\nEither party may terminate this Agreement with 30 days written notice."
+    with patch('src.services.chunking.get_embedding', side_effect=mock_get_embedding), \
+         patch('src.services.ingest.extract_pdf_content', return_value={'page_count': 1, 'file_size': len(pdf_content), 'pages': [{'page_num': 1, 'text': text, 'char_count': len(text)}], 'metadata': {}}):
         files = {"files": ("overlap_test.pdf", io.BytesIO(pdf_content), "application/pdf")}
         response = await client.post("/api/v1/ingest", files=files)
     
@@ -164,7 +168,9 @@ trailer<</Size 5/Root 1 0 R>>
 """
     
     # Ingest with mocked embeddings
-    with patch('src.services.chunking.get_embedding', side_effect=mock_get_embedding):
+    text = "Payment terms: All invoices are due Net 30 days.\n\nLate payments incur a 2 percent monthly interest charge.\n\nConfidentiality period: 2 years from disclosure date."
+    with patch('src.services.chunking.get_embedding', side_effect=mock_get_embedding), \
+         patch('src.services.ingest.extract_pdf_content', return_value={'page_count': 1, 'file_size': len(pdf_content), 'pages': [{'page_num': 1, 'text': text, 'char_count': len(text)}], 'metadata': {}}):
         files = {"files": ("payment_doc.pdf", io.BytesIO(pdf_content), "application/pdf")}
         response = await client.post("/api/v1/ingest", files=files)
     
@@ -206,7 +212,8 @@ trailer<</Size 4/Root 1 0 R>>
 %%EOF
 """
     
-    with patch('src.services.chunking.get_embedding', side_effect=mock_get_embedding):
+    with patch('src.services.chunking.get_embedding', side_effect=mock_get_embedding), \
+         patch('src.services.ingest.extract_pdf_content', return_value={'page_count': 1, 'file_size': len(pdf_content), 'pages': [{'page_num': 1, 'text': 'Document filter test content.', 'char_count': 28}], 'metadata': {}}):
         # Ingest two documents
         files1 = {"files": ("doc1.pdf", io.BytesIO(pdf_content), "application/pdf")}
         response1 = await client.post("/api/v1/ingest", files=files1)
@@ -241,7 +248,7 @@ async def test_chunking_skip_embedding_fallback(client: AsyncClient, db):
         filename="test_skip.pdf",
         num_pages=1,
         file_size=100,
-        metadata={
+        doc_metadata={
             "pages": [
                 {
                     "page_num": 1,
@@ -283,7 +290,7 @@ async def test_embedding_failure_partial_success(client: AsyncClient, db):
         filename="test_partial.pdf",
         num_pages=1,
         file_size=100,
-        metadata={
+        doc_metadata={
             "pages": [
                 {
                     "page_num": 1,
@@ -378,7 +385,8 @@ trailer<</Size 4/Root 1 0 R>>
 %%EOF
 """
     
-    with patch('src.services.chunking.get_embedding', side_effect=mock_get_embedding):
+    with patch('src.services.chunking.get_embedding', side_effect=mock_get_embedding), \
+         patch('src.services.ingest.extract_pdf_content', return_value={'page_count': 1, 'file_size': len(pdf_content), 'pages': [{'page_num': 1, 'text': 'Metadata accuracy test text for chunking.', 'char_count': 41}], 'metadata': {}}):
         files = {"files": ("metadata_test.pdf", io.BytesIO(pdf_content), "application/pdf")}
         response = await client.post("/api/v1/ingest", files=files)
     

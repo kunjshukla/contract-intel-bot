@@ -124,7 +124,7 @@ async def chunk_and_embed(
         raise ValueError(f"Document {doc_id} not found")
     
     # Extract page texts from metadata
-    pages = document.metadata.get("pages", [])
+    pages = document.doc_metadata.get("pages", [])
     if not pages:
         logger.warning("Document has no page data", doc_id=str(doc_id))
         return 0

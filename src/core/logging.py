@@ -10,7 +10,7 @@ from typing import Any
 import structlog
 
 
-def redact_pii(event_dict: dict[str, Any]) -> dict[str, Any]:
+def redact_pii(logger: Any, method_name: str, event_dict: dict[str, Any]) -> dict[str, Any]:
     """
     Redact PII from log messages.
     

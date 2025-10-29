@@ -24,7 +24,7 @@ class Document(Base):
     upload_date = Column(DateTime(timezone=True), server_default=func.now())
     file_size = Column(Integer)  # bytes
     num_pages = Column(Integer)
-    metadata = Column(JSON, default=dict)  # {user_id, tags, status, etc.}
+    doc_metadata = Column(JSON, default=dict, name="metadata")  # {user_id, tags, status, etc.}
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     updated_at = Column(
         DateTime(timezone=True), server_default=func.now(), onupdate=func.now()
@@ -32,8 +32,8 @@ class Document(Base):
 
     # Relationships
     chunks = relationship("Chunk", back_populates="document", cascade="all, delete-orphan")
-    extraction = relationship(
-        "Extraction", back_populates="document", uselist=False, cascade="all, delete-orphan"
+    extractions = relationship(
+        "Extraction", back_populates="document", cascade="all, delete-orphan"
     )
     audit = relationship(
         "Audit", back_populates="document", uselist=False, cascade="all, delete-orphan"
@@ -68,12 +68,11 @@ class Extraction(Base):
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     doc_id = Column(UUID(as_uuid=True), ForeignKey("documents.id", ondelete="CASCADE"))
     fields = Column(JSON, nullable=False)  # ExtractionFields as dict
-    extraction_method = Column(String(50))  # "llm" | "hybrid" | "regex"
-    confidence = Column(Float)  # 0.0 - 1.0
-    created_at = Column(DateTime(timezone=True), server_default=func.now())
+    extraction_method = Column(String(50), default="llm")  # "llm" | "hybrid" | "regex"
+    extracted_at = Column(DateTime(timezone=True), server_default=func.now())
 
     # Relationship
-    document = relationship("Document", back_populates="extraction")
+    document = relationship("Document", back_populates="extractions")
 
 
 class Audit(Base):

@@ -192,7 +192,7 @@ async def ingest_pdf(
         upload_date=datetime.utcnow(),
         file_size=extracted["file_size"],
         num_pages=extracted["page_count"],
-        metadata={
+        doc_metadata={
             "pages": extracted["pages"],
             **extracted["metadata"],
         },
@@ -265,7 +265,7 @@ async def ingest_pdf_background(
         upload_date=datetime.utcnow(),
         file_size=extracted["file_size"],
         num_pages=extracted["page_count"],
-        metadata={
+        doc_metadata={
             "pages": extracted["pages"],
             **extracted["metadata"],
             "processed_in_background": True,

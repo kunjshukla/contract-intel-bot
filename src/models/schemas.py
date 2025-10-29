@@ -55,9 +55,9 @@ class DocumentOut(BaseModel):
     upload_date: datetime
     file_size: Optional[int] = None
     num_pages: Optional[int] = None
-    metadata: dict = Field(default_factory=dict)
+    metadata: dict = Field(default_factory=dict, alias="doc_metadata")
 
-    model_config = ConfigDict(from_attributes=True)
+    model_config = ConfigDict(from_attributes=True, populate_by_name=True)
 
 
 class IngestResponse(BaseModel):
@@ -70,13 +70,13 @@ class IngestResponse(BaseModel):
 
 # Extraction Response
 class ExtractionOut(BaseModel):
-    """Extraction response with fields and confidence."""
+    """Extraction response with structured fields."""
 
+    id: UUID
     doc_id: UUID
     fields: ExtractionFields
-    extraction_method: str
-    confidence: float
-    created_at: datetime
+    extracted_at: datetime
+    extraction_method: str = "llm"
 
     model_config = ConfigDict(from_attributes=True)
 
